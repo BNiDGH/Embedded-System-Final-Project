@@ -1,0 +1,18 @@
+# ไม่ต้องส่งเข้า build context
+.git
+.gitignore
+**/.env
+**/__pycache__
+**/*.py[cod]
+**/.venv
+**/venv
+**/*.db
+**/*.sqlite3
+**/service-account.json
+
+# ไม่เกี่ยวกับ container (เฟิร์มแวร์/docs)
+board
+*.pdf
+*.png
+*.xlsx
+~$*

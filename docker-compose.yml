@@ -1,0 +1,96 @@
+# รันทั้ง 3 service พร้อมกัน:  docker compose up -d --build
+#
+#   cloud      :8000  รับข้อมูลจาก gateway + /api/state
+#   ai         :8001  ตรวจคน/เสื้อผ้าจากภาพ OV7670
+#   dashboard  :8080  เปิดในเบราว์เซอร์
+#
+# ค่า .env ของแต่ละโฟลเดอร์ถูกอ่านถ้ามี (ไม่บังคับ) และค่าใน environment: ชนะเสมอ
+# IP ของ ESP32 (GATEWAY_URL) ต้องเป็น IP ในวง LAN เดียวกับเครื่องที่รัน compose
+
+name: wearwise
+
+x-app: &app
+  context: .
+  dockerfile: Dockerfile
+
+services:
+  cloud:
+    build:
+      <<: *app
+      args:
+        SERVICE: cloud
+    image: wearwise-cloud:local
+    container_name: wearwise-cloud
+    restart: unless-stopped
+    init: true
+    working_dir: /app
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: ./cloud/.env
+        required: false
+    environment:
+      # เก็บ SQLite (แถวดิบ + ยอดหยิบ) ไว้ใน volume ไม่หายเมื่อ container ถูกสร้างใหม่
+      WEARWISE_DB: /data/cloud.db
+    volumes:
+      - cloud-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  ai:
+    build:
+      <<: *app
+      args:
+        SERVICE: ai
+    image: wearwise-ai:local
+    container_name: wearwise-ai
+    restart: unless-stopped
+    init: true
+    working_dir: /app
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "8001:8001"
+    env_file:
+      - path: ./ai/.env
+        required: false
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  dashboard:
+    build:
+      <<: *app
+      args:
+        SERVICE: web_dashboard
+    image: wearwise-dashboard:local
+    container_name: wearwise-dashboard
+    restart: unless-stopped
+    init: true
+    working_dir: /app
+    command: ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
+    ports:
+      - "8080:8080"
+    env_file:
+      - path: ./web_dashboard/.env
+        required: false
+    environment:
+      # ชื่อ service ใน compose network (127.0.0.1 คือตัว container เอง ไม่ใช่ cloud)
+      CLOUD_URL: http://cloud:8000
+      AI_URL: http://ai:8001
+      DASHBOARD_TIMEOUT_S: "5"
+    depends_on:
+      cloud:
+        condition: service_healthy
+      ai:
+        condition: service_healthy
+
+volumes:
+  cloud-data:

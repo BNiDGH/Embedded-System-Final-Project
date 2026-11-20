@@ -1,0 +1,24 @@
+# secrets
+.env
+secrets.h
+service-account.json
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# runtime data
+*.db
+*.sqlite3
+
+# arduino / platformio build output
+board/build/
+board/.pio/
+.pio/
+*.hex
+*.bin
+
+.DS_Store
+Thumbs.db

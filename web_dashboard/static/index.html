@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WearWise: ตู้เสื้อผ้าอัจฉริยะ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>WearWise</h1>
+      <p class="sub">ตู้เสื้อผ้าอัจฉริยะ · sensor node → gateway → cloud → dashboard</p>
+    </div>
+    <div id="status" class="pill"><span class="dot"></span><span id="statusText">กำลังเชื่อมต่อ</span></div>
+  </header>
+
+  <section aria-labelledby="flowTitle">
+    <h2 id="flowTitle">เส้นทางข้อมูล</h2>
+    <p class="hint">ช่องสีเขียวคือข้อมูลรอบล่าสุดที่ไหลผ่านครบทั้ง 4 ชั้น</p>
+    <div id="flow"></div>
+  </section>
+
+  <div class="cols">
+    <section aria-labelledby="nodeTitle">
+      <h2 id="nodeTitle">เซนเซอร์บนบอร์ด</h2>
+      <p class="hint" id="nodeHint">DHT22, MQ-135, BH1750 อยู่บน NA709 · OV7670, HC-SR04 อยู่บน gateway CB302</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>บอร์ด</th><th>เซนเซอร์</th><th>ค่าล่าสุด</th><th>แพ็กเก็ต</th></tr></thead>
+          <tbody id="nodes"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="gwTitle">
+      <h2 id="gwTitle">Gateway: การตัดสินใจและ actuator</h2>
+      <p class="hint">พัดลมตัดสินบน gateway เอง ส่วนมุม servo มาจากผล AI (closed loop)</p>
+      <div class="rows" id="gateway"></div>
+      <div class="btn-row">
+        <button id="estopBtn" class="btn" type="button">หยุดฉุกเฉิน</button>
+        <span class="btn-note" id="estopNote">ปิดพัดลมและหมุนกล้องกลับมุมปลอดภัย</span>
+      </div>
+      <p class="ai-line" id="aiLine">AI: กำลังตรวจสอบ…</p>
+    </section>
+  </div>
+
+  <section aria-labelledby="rowTitle">
+    <h2 id="rowTitle">แถวดิบใน cloud</h2>
+    <p class="hint" id="cloudHint">ข้อมูลทุกแถวที่ gateway ส่งขึ้น</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>เวลา</th><th>node</th><th>อุณหภูมิ/ความชื้น</th><th>ก๊าซ/แสง</th><th>ระยะ/คน</th><th>พัดลม/servo</th><th>หมายเหตุ</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="evTitle">
+    <h2 id="evTitle">เหตุการณ์และการแจ้งเตือน</h2>
+    <p class="hint">การตัดสินใจพัดลม ผล AI ที่สั่ง servo และข้อความ Discord</p>
+    <div id="events"></div>
+  </section>
+
+  <section aria-labelledby="wardTitle">
+    <h2 id="wardTitle">เสื้อผ้าที่ AI จำแนกได้</h2>
+    <p class="hint">นับเฉพาะครั้งที่ AI เจอเป้าตอนมีคนเข้ามาใหม่ (มี cooldown กันนับซ้ำ)</p>
+    <div id="wardrobe"></div>
+  </section>
+
+  <footer>
+    dashboard อ่านจาก cloud API ทุก 2 วินาที · ตั้งค่า <code>CLOUD_URL</code> และ
+    <code>AI_URL</code> ใน <code>web_dashboard/.env</code>
+  </footer>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

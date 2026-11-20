@@ -1,0 +1,12 @@
+fastapi>=0.110
+uvicorn>=0.29
+numpy>=1.26
+# ต้องเป็น 4.x: OpenCV 5 ตัด cv2.HOGDescriptor ซึ่งเป็น detector สำรองออก
+opencv-python-headless>=4.9,<5
+
+# ไม่บังคับ: ตัวจำแนกชนิดเสื้อผ้า (ถ้าไม่ติดตั้งจะใช้กฎสีแทน)
+# torch>=2.2
+# torchvision>=0.17
+
+# ไม่บังคับ: ตรวจจับคนด้วย YOLO (ถ้าไม่ติดตั้งจะใช้ OpenCV HOG)
+# ultralytics>=8.2
