@@ -3,7 +3,9 @@
 #define STREAM_MODE 1   // 0 = ทดสอบ (ดูข้อความ), 1 = ส่งภาพให้ Python
 #define COLOR       1   // 1 = สี RGB565, 0 = ขาวดำ
 
+
 void setup() {
+
   Serial.begin(115200);
 #if !STREAM_MODE
   delay(3000);
@@ -45,6 +47,11 @@ void setup() {
 #if !STREAM_MODE
   Serial.printf("camera init: 0x%x\n", err);
 #endif
+// ล็อกขา RGB ให้เป็น LOW ค้างไว้ (กันสัญญาณรบกวนทำให้ไฟติดเอง)
+  pinMode(48, OUTPUT);
+  digitalWrite(48, LOW);
+  pinMode(38, OUTPUT);
+  digitalWrite(38, LOW);
 }
 
 void loop() {
