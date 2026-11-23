@@ -24,6 +24,9 @@ pip install torch torchvision  # จำแนกชนิดผ้าด้ว�
 แล้วตั้ง `AI_BACKEND=yolo` / `AI_CLASSIFIER=torch` หรือปล่อย `auto`
 (ลำดับ auto: YOLO → HOG และ torch → color)
 
+ขั้นตอนเปิดใช้ YOLO แบบละเอียด (ติดตั้ง ตั้งค่า ทดสอบ แก้ปัญหา) อยู่ที่
+[`YOLO.md`](YOLO.md)
+
 ตรวจว่ากำลังใช้อะไร: <http://127.0.0.1:8001/health>
 
 ## API

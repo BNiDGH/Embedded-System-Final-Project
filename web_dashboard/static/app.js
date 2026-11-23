@@ -24,6 +24,111 @@ function h(tag, attrs, ...kids) {
 
 let state = null;
 
+/* ---------------------------------------------------------------- pages */
+
+const PAGES = {
+  wardrobe: ['สถานะตู้เสื้อผ้า', 'จำนวนครั้งที่แต่ละชุดถูกหยิบไปใส่'],
+  system: ['ภาพรวมระบบ', 'เส้นทางข้อมูล เซนเซอร์ และการตัดสินใจบน gateway'],
+  raw: ['Raw data', 'แถวดิบที่ไหลจาก gateway ขึ้น cloud แบบเรียลไทม์'],
+};
+
+function currentPage() {
+  const m = location.hash.match(/^#\/([a-z]+)/);
+  return (m && PAGES[m[1]]) ? m[1] : 'wardrobe';
+}
+
+function setPage(name) {
+  document.querySelectorAll('.page').forEach(p => { p.hidden = p.id !== 'page-' + name; });
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    const on = b.dataset.page === name;
+    b.classList.toggle('active', on);
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+  const [title, sub] = PAGES[name];
+  $('pageTitle').textContent = title;
+  $('pageSub').textContent = sub;
+  document.title = 'WearWise: ' + title;
+}
+
+/* ------------------------------------------------------- drawer menu */
+
+const drawer = $('drawer');
+const backdrop = $('backdrop');
+const menuBtn = $('menuBtn');
+
+function setDrawer(open) {
+  drawer.classList.toggle('open', open);
+  drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+  menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  backdrop.hidden = !open;
+  document.body.classList.toggle('drawer-open', open);
+  if (open) $('closeBtn').focus();
+}
+
+menuBtn.addEventListener('click', () => setDrawer(!drawer.classList.contains('open')));
+$('closeBtn').addEventListener('click', () => { setDrawer(false); menuBtn.focus(); });
+backdrop.addEventListener('click', () => setDrawer(false));
+drawer.querySelectorAll('.nav-btn').forEach(a => a.addEventListener('click', () => setDrawer(false)));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') setDrawer(false); });
+
+window.addEventListener('hashchange', () => { setDrawer(false); setPage(currentPage()); });
+
+/* เปิดหน้าแรกที่ /#/wardrobe เสมอเมื่อยังไม่มี hash */
+if (!location.hash) history.replaceState(null, '', '#/wardrobe');
+setPage(currentPage());
+
+/* ------------------------------------------------------------- wardrobe */
+
+function renderWardrobe(s) {
+  const items = (s.wardrobe || []).slice()
+    .sort((a, b) => (b.uses || 0) - (a.uses || 0) || String(a.name).localeCompare(String(b.name), 'th'));
+  const used = items.filter(w => w.uses > 0);
+  const total = items.reduce((sum, w) => sum + (w.uses || 0), 0);
+  const top = used[0] || null;
+  const max = Math.max(1, ...items.map(w => w.uses || 0));
+
+  const stats = $('wardrobeSummary');
+  stats.replaceChildren(
+    h('div', { class: 'stat' }, h('div', { class: 'k' }, 'ชุดในตู้'),
+      h('div', { class: 'v' }, items.length, h('small', {}, 'ชุด'))),
+    h('div', { class: 'stat used' }, h('div', { class: 'k' }, 'ชุดที่ถูกหยิบแล้ว'),
+      h('div', { class: 'v' }, used.length, h('small', {}, 'ชุด'))),
+    h('div', { class: 'stat' }, h('div', { class: 'k' }, 'หยิบไปทั้งหมด'),
+      h('div', { class: 'v' }, total, h('small', {}, 'ครั้ง'))),
+    h('div', { class: 'stat' }, h('div', { class: 'k' }, 'ใส่บ่อยที่สุด'),
+      h('div', { class: 'v', style: 'font-size:1.05rem;line-height:1.5' },
+        top ? top.name : '—',
+        top ? h('small', {}, ` ${top.uses} ครั้ง`) : null)),
+  );
+
+  $('cooldownNote').textContent = s.pick_cooldown_s
+    ? `(cooldown ${s.pick_cooldown_s} วินาที)` : '';
+
+  const box = $('wardrobe');
+  box.replaceChildren();
+  if (!items.length) {
+    box.append(h('div', { class: 'empty' }, 'ยังไม่มีรายการเสื้อผ้าใน cloud'));
+    return;
+  }
+  const grid = h('div', { class: 'closet' });
+  items.forEach(w => {
+    grid.append(h('article', { class: 'cloth ' + (w.uses > 0 ? 'used' : 'unused') },
+      h('div', { class: 'cloth-top' },
+        h('span', { class: 'cloth-cat' }, w.category || 'อื่น ๆ'),
+        h('span', { class: 'cloth-tag' }, w.uses > 0 ? 'หยิบแล้ว' : 'ยังไม่ถูกหยิบ')),
+      h('h4', {}, w.name),
+      h('div', { class: 'cloth-count' },
+        h('strong', {}, w.uses || 0), 'ครั้ง',
+        w.uses === 1 ? '' : ''),
+      h('div', { class: 'bar' },
+        h('i', { style: `width:${Math.round((w.uses || 0) / max * 100)}%` })),
+    ));
+  });
+  box.append(grid);
+}
+
+/* ------------------------------------------------------------- pipeline */
+
 function aiText(s) {
   const ai = s.ai || {};
   const det = ai.detector || {};
@@ -137,29 +242,6 @@ function renderGateway(s) {
   $('aiLine').textContent = aiText(s);
 }
 
-function renderRows(s) {
-  const body = $('rows'); body.replaceChildren();
-  if (!s.rows || !s.rows.length) {
-    body.append(h('tr', {}, h('td', { colspan: '7' }, 'ยังไม่มีแถวใน cloud')));
-  } else {
-    s.rows.forEach(r => {
-      const isGw = r.node_id === 'CB302';
-      body.append(h('tr', {},
-        h('td', { class: 'num' }, fmtTime(r.ts)),
-        h('td', {}, h('strong', {}, r.node_id)),
-        h('td', { class: 'num' }, isGw ? '—' : `${show(r.temp, 1, ' °C')} / ${show(r.hum, 0, ' %')}`),
-        h('td', { class: 'num' }, isGw ? '—' : `${show(r.gas, 0)} / ${show(r.lux, 0, ' lx')}`),
-        h('td', { class: 'num' }, isGw ? `${show(r.dist_cm, 0, ' cm')} ${Number(r.person) ? '· มีคน' : ''}` : '—'),
-        h('td', { class: 'num' }, isGw ? `${Number(r.fan) ? 'ON' : 'off'} / ${show(r.servo, 0, '°')}` : '—'),
-        h('td', {}, r.note || '')));
-    });
-  }
-  const cloud = s.cloud || {};
-  $('cloudHint').textContent = `${cloud.backend || '—'}${cloud.detail ? ' · ' + cloud.detail : ''} · ${cloud.rows || 0} แถว` +
-    (cloud.pending ? ` · รอเขียนลงชีตอีก ${cloud.pending} แถว` : '') +
-    (cloud.error ? ` · ${cloud.error}` : '');
-}
-
 function renderEvents(s) {
   const box = $('events'); box.replaceChildren();
   if (!s.events || !s.events.length) {
@@ -175,19 +257,57 @@ function renderEvents(s) {
   });
 }
 
-function renderWardrobe(s) {
-  const box = $('wardrobe'); box.replaceChildren();
-  const used = (s.wardrobe || []).filter(w => w.uses > 0);
-  if (!used.length) {
-    box.append(h('div', { class: 'empty' }, 'ยังไม่มีการจำแนก'));
-    return;
+/* ------------------------------------------------------------- raw data */
+
+function renderRaw(s) {
+  const rows = s.rows || [];
+  const cloud = s.cloud || {};
+  const newest = rows[0];
+  const age = newest ? Math.max(0, s.now - Number(newest.ts)) : null;
+
+  const live = $('rawLive');
+  live.className = 'live' +
+    (age === null ? ' off' : age < 6 ? ' on' : age < 30 ? ' stale' : ' off');
+  $('rawLiveText').textContent = age === null
+    ? 'ยังไม่มีข้อมูลไหลเข้า cloud'
+    : (age < 6 ? 'กำลังรับข้อมูล · ' : 'ข้อมูลหยุดไหล · ') +
+      `แถวล่าสุด ${fmtTime(newest.ts)} (${age.toFixed(1)} วินาทีที่แล้ว)`;
+
+  $('rawStats').replaceChildren(
+    h('div', { class: 'stat' }, h('div', { class: 'k' }, 'แถวทั้งหมด'),
+      h('div', { class: 'v' }, cloud.rows || 0, h('small', {}, 'แถว'))),
+    h('div', { class: 'stat' }, h('div', { class: 'k' }, 'backend'),
+      h('div', { class: 'v', style: 'font-size:1rem;line-height:1.6' }, cloud.backend || '—',
+        cloud.detail ? h('small', {}, cloud.detail) : null)),
+    h('div', { class: 'stat' }, h('div', { class: 'k' }, 'รอเขียนลงชีต'),
+      h('div', { class: 'v' }, cloud.pending || 0, h('small', {}, 'แถว'))),
+    h('div', { class: 'stat' }, h('div', { class: 'k' }, 'แถวล่าสุด'),
+      h('div', { class: 'v', style: 'font-size:1rem;line-height:1.6' },
+        newest ? fmtTime(newest.ts) : '—',
+        newest ? h('small', {}, ` #${newest.seq} · ${newest.node_id}`) : null)),
+  );
+
+  const body = $('rows'); body.replaceChildren();
+  if (!rows.length) {
+    body.append(h('tr', {}, h('td', { colspan: '7' }, 'ยังไม่มีแถวใน cloud')));
+  } else {
+    rows.forEach((r, i) => {
+      const isGw = r.node_id === 'CB302';
+      body.append(h('tr', { class: i === 0 ? 'fresh' : '' },
+        h('td', { class: 'num' }, fmtTime(r.ts)),
+        h('td', {}, h('strong', {}, r.node_id)),
+        h('td', { class: 'num' }, isGw ? '—' : `${show(r.temp, 1, ' °C')} / ${show(r.hum, 0, ' %')}`),
+        h('td', { class: 'num' }, isGw ? '—' : `${show(r.gas, 0)} / ${show(r.lux, 0, ' lx')}`),
+        h('td', { class: 'num' }, isGw ? `${show(r.dist_cm, 0, ' cm')} ${Number(r.person) ? '· มีคน' : ''}` : '—'),
+        h('td', { class: 'num' }, isGw ? `${Number(r.fan) ? 'ON' : 'off'} / ${show(r.servo, 0, '°')}` : '—'),
+        h('td', {}, r.note || '')));
+    });
   }
-  used.forEach(w => {
-    box.append(h('div', { class: 'item' },
-      h('span', {}, w.name, h('span', { class: 'cat' }, ' · ' + w.category)),
-      h('strong', {}, w.uses + ' ครั้ง')));
-  });
+  $('cloudHint').textContent = `${cloud.backend || '—'}${cloud.detail ? ' · ' + cloud.detail : ''} · ${cloud.rows || 0} แถว` +
+    (cloud.error ? ` · ${cloud.error}` : '');
 }
+
+/* ---------------------------------------------------------------- estop */
 
 async function toggleEstop() {
   const current = state && state.gateway && state.gateway.last
@@ -212,6 +332,8 @@ async function toggleEstop() {
 
 $('estopBtn').addEventListener('click', toggleEstop);
 
+/* ----------------------------------------------------------------- tick */
+
 async function tick() {
   try {
     const res = await fetch('/api/state', { cache: 'no-store' });
@@ -222,6 +344,8 @@ async function tick() {
       pill.className = 'pill bad';
       $('statusText').textContent = state.error || 'cloud ตอบไม่ได้';
       $('flow').replaceChildren(h('div', { class: 'empty' }, 'ยังโหลดข้อมูลไม่ได้: ' + (state.error || 'ไม่ทราบสาเหตุ')));
+      $('wardrobeSummary').replaceChildren();
+      $('wardrobe').replaceChildren(h('div', { class: 'empty' }, 'โหลดข้อมูลจาก cloud ไม่ได้'));
       return;
     }
 
@@ -236,8 +360,9 @@ async function tick() {
     btn.textContent = estopOn ? 'ปลดล็อกหยุดฉุกเฉิน' : 'หยุดฉุกเฉิน';
     if (!state.gateway.last) $('estopNote').textContent = 'ยังไม่พบ gateway';
 
-    renderFlow(state); renderNodes(state); renderGateway(state);
-    renderRows(state); renderEvents(state); renderWardrobe(state);
+    renderWardrobe(state);
+    renderFlow(state); renderNodes(state); renderGateway(state); renderEvents(state);
+    renderRaw(state);
   } catch (e) {
     $('status').className = 'pill bad';
     $('statusText').textContent = 'เชื่อมต่อ dashboard server ไม่ได้';
