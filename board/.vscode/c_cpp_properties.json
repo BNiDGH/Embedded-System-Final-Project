@@ -1,0 +1,58 @@
+{
+  "configurations": [
+    {
+      "name": "gateway (ESP32-S3)",
+      "compileCommands": "",
+      "includePath": [
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/cores/esp32",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/variants/esp32s3",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/**",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/qio_qspi/include",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/dio_qspi/include",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/**",
+        "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa-esp32s3/xtensa-esp32s3-elf/include",
+        "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa-esp32s3/lib/gcc/xtensa-esp32s3-elf/8.4.0/include",
+        "${workspaceFolder}/**"
+      ],
+      "defines": [
+        "ARDUINO=10812",
+        "ARDUINO_ARCH_ESP32",
+        "ESP32",
+        "ARDUINO_ESP32S3_DEV",
+        "CORE_DEBUG_LEVEL=0"
+      ],
+      "compilerPath": "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa-esp32s3/bin/xtensa-esp32s3-elf-g++.exe",
+      "cStandard": "gnu17",
+      "cppStandard": "gnu++17",
+      "intelliSenseMode": "windows-gcc-x64"
+    },
+    {
+      "name": "node (ESP32)",
+      "compileCommands": "",
+      "includePath": [
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/cores/esp32",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/variants/esp32",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/**",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/dio_qspi/include",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/qio_qspi/include",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/**",
+        "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa-esp32/xtensa-esp32-elf/include",
+        "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa-esp32/lib/gcc/xtensa-esp32-elf/8.4.0/include",
+        "${workspaceFolder}/**"
+      ],
+      "defines": [
+        "ARDUINO=10812",
+        "ARDUINO_ARCH_ESP32",
+        "ESP32",
+        "CORE_DEBUG_LEVEL=0"
+      ],
+      "compilerPath": "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa-esp32/bin/xtensa-esp32-elf-g++.exe",
+      "cStandard": "gnu17",
+      "cppStandard": "gnu++17",
+      "intelliSenseMode": "windows-gcc-x64"
+    }
+  ],
+  "version": 4
+}
